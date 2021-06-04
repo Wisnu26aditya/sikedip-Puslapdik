@@ -1,0 +1,530 @@
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <h1 class="h3 mb-4 text-gray-800"><?= $title ?></h1>
+    <div class="row">
+        <div class="col-lg">
+            <?php if (validation_errors()) : ?>
+                <div class="alert alert-danger" role="alert">
+                    <?= validation_errors(); ?>
+                </div>
+            <?php endif; ?>
+            <?= $this->session->flashdata('messege'); ?>
+            <!-- Kondisi dimana user boleh upload atau tidak -->
+            <?php
+            $email = $this->session->userdata('email');
+            $kueri = $this->db->get_where('login', array('email' => $email));
+            if ($kueri->num_rows() > 0) {
+                $pilihan = $kueri->row_array();
+            }
+            if ($pilihan['is_upload'] == '1') { ?>
+                <a href="" class="btn btn-primary mb-3" data-toggle="modal" data-target="#add_perjadin"> Tambah Data</a>
+            <?php } else { ?>
+                <span class="btn btn-primary mb-3" readonly>Tambah Data-disabled</span>
+            <?php } ?>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered" style="width:100%" id="submenu">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">NO. SPP/SPM</th>
+                            <th scope="col">NO. Dokumen</th>
+                            <th scope="col">Tanggal</th>
+                            <th scope="col">Nilai SPM</th>
+                            <th scope="col">Uraian</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $i = 1; ?>
+                        <?php foreach ($Perjadin as $a) :
+                            $spp = $a['lpj_nomorsppspm'];
+                            $dok = $a['dokumen_id'];
+                            $tgl = $a['lpj_tgl'];
+                            $nilaispm = $a['lpj_nilaispm'];
+                            $uraian = $a['lpj_uraian'];
+                            $nosp2d = $a['lpj_nomorsp2d'];
+                            $tglsp2d = $a['lpj_tglsp2d'];
+                            $nilaisp2d = $a['lpj_nilaisp2d'];
+                        ?>
+
+                            <tr>
+                                <th scope="row"><?= $i; ?></th>
+                                <td><?= $spp; ?></td>
+                                <td><?= $dok; ?></td>
+                                <td><?= $tgl; ?></td>
+                                <td><?= 'Rp. ' . $nilaispm; ?></td>
+                                <td><?= $uraian; ?></td>
+                                <td>
+                                    <!-- Kondisi dimana user boleh download atau tidak -->
+                                    <?php if ($pilihan['is_download'] == '1') { ?>
+                                        <!-- 1 : Boleh -->
+                                        <a href="" class="badge badge-pill badge-success" data-toggle="modal" data-target="#view_perjadin<?= $dok; ?>">View</a>
+                                        <a href="" class="badge badge-pill badge-warning" data-toggle="modal" data-target="#edit_perjadin<?= $dok; ?>">Edit</a>
+                                        <a href="" class="badge badge-pill badge-danger" data-toggle="modal" data-target="#hapus_perjadin<?= $dok; ?>">Delete</a>
+                                    <?php } else { ?>
+                                        <span class="badge badge-pill badge-success" readonly>View-disabled</span>
+                                        <span class="badge badge-pill badge-warning" readonly>Deleted-disabled</span>
+                                    <?php }; ?>
+                                </td>
+                            </tr>
+                            <?php $i++; ?>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- /.container-fluid -->
+
+</div>
+<!-- End of Main Content -->
+
+
+<!-- Modal add-->
+<div class="modal fade" id="add_perjadin" tabindex="-1" role="dialog" aria-labelledby="add_perjadinLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <form action="<?= base_url('perjadin/simpan_perjadin'); ?>" method="post" enctype="multipart/form-data">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="add_perjadinlabel">Upload Dokumen Perjalanan Dinas</h5>
+                    <div class="form-group">
+                        <span class="badge badge-pill badge-danger">Ukuran File Max. 2MB</span>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-auto">
+                                <div class="form-group">
+                                    <input type="text" maxlength="5" onkeypress="return hanyaAngka(event)" class="form-control" id="nospp" name="nospp" placeholder="Nomor SPP/SPM" autocomplete="off">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="tgl" name="tgl" placeholder="Tanggal" autocomplete="off">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" onkeyup="convertToRupiah(this);" class="form-control" id="nilaispm" name="nilaispm" placeholder="NIlai SPM" autocomplete="off">
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleFormControlFile1">Pilih Dokumen</label>
+                                    <input name="file_upload" type="file" class="form-control-file">
+                                </div>
+                            </div>
+                            <div class="col-md-auto">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="uraian" name="uraian" placeholder="Uraian" autocomplete="off">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nosp2d" name="nosp2d" placeholder="No SP2D" autocomplete="off">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="tglsp2d" name="tglsp2d" placeholder="Tanggal SP2D" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="col-md-auto">
+                                <div class="form-group">
+                                    <input type="text" onkeyup="convertToRupiah(this);" class="form-control" id="nilaisp2d" name="nilaisp2d" placeholder="Nilai SP2D" autocomplete="off">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="created_by" name="created_by" value="<?= $user['name']; ?>" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="kode_prj" name="kode_prj" value="<?= $kodeprj; ?>" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <fieldset>
+                                    <legend>Checklist Dokumen</legend>
+                                    <span class="badge badge-pill badge-warning">Pastikan checklist sesuai file yang diupload</span>
+                                    <div class="row">
+                                        <div class="col-md-auto">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" id="cb_spp" name="cb_spp" value="1">
+                                                    Dokumen SPP
+                                                </label>
+                                            </div>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" id="cb_spm" name="cb_spm" value="1">
+                                                    Dokumen SPM
+                                                </label>
+                                            </div>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" id="cb_sp2d" name="cb_sp2d" value="1">
+                                                    Dokumen SP2D
+                                                </label>
+                                            </div>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" id="cb_sk" name="cb_sk" value="1">
+                                                    Dokumen ST/SK Kegiatan
+                                                </label>
+                                            </div>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" id="cb_kuitansi" name="cb_kuitansi" value="1">
+                                                    Dokumen Rekap dan Kuitansi
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-auto">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" id="cb_laporan" name="cb_laporan" value="1">
+                                                    Dokumen Laporan Kegiatan
+                                                </label>
+                                            </div>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" id="cb_biodata" name="cb_biodata" value="1">
+                                                    Dokumen Biodata
+                                                </label>
+                                            </div>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" id="cb_daftar" name="cb_daftar" value="1">
+                                                    Dokumen Daftar Hadir
+                                                </label>
+                                            </div>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" id="cb_atk" name="cb_atk" value="1">
+                                                    Dokumen Tanda Terima Perlengkapan Peserta
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </div>
+    </div>
+    </form>
+</div>
+
+<!-- Modal view-->
+
+<?php $i = 1; ?>
+<?php foreach ($Perjadin as $a) :
+    $spp = $a['lpj_nomorsppspm'];
+    $dok = $a['dokumen_id'];
+    $tgl = $a['lpj_tgl'];
+    $nilaispm = $a['lpj_nilaispm'];
+    $uraian = $a['lpj_uraian'];
+    $file_upload = $a['file_upload'];
+?>
+
+    <div class="modal fade" id="view_perjadin<?= $dok; ?>" tabindex="-1" role="dialog" aria-labelledby="view_perjadinLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <form action="<?= base_url('perjadin/simpan_perjadin'); ?>" method="post" enctype="multipart/form-data">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="view_perjadinlabel">Download Dokumen Perjalanan Dinas</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-md-auto">
+                                    <div class="form-group">
+                                        <label>Nomor SPP/SPM</label>
+                                        <input type="text" class="form-control" id="nospp" name="nospp" value="<?= $spp; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tanggal SPP/SPM</label>
+                                        <input type="text" class="form-control" id="tgl" name="tgl" value="<?= $tgl; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nilai SPM</label>
+                                        <input type="text" class="form-control" id="nilaispm" name="nilaispm" value="<?= 'Rp. ' . $nilaispm; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exampleFormControlFile1">File Upload</label>
+                                        <a href="<?php echo base_url('src/upload/lpj/') . $file_upload; ?>" class="btn btn-success btn-sm"><i class="fas fa-fw fa-download" placeholder="download"></i></a>
+                                    </div>
+                                </div>
+                                <div class="col-md-auto">
+                                    <div class="form-group">
+                                        <label>Uraian</label>
+                                        <input type="text" class="form-control" id="uraian" name="uraian" value="<?= $uraian; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nomor SP2D</label>
+                                        <input type="text" class="form-control" id="nosp2d" name="nosp2d" value="<?= $nosp2d; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tanggal SP2D</label>
+                                        <input type="text" class="form-control" id="tglsp2d" name="tglsp2d" value="<?= $tglsp2d; ?>" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-auto">
+                                    <div class="form-group">
+                                        <label>Nilai SP2D</label>
+                                        <input type="text" class="form-control" id="nilaisp2d" name="nilaisp2d" value="<?= 'Rp. ' . $nilaisp2d; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Uploaded By</label>
+                                        <input type="text" class="form-control" id="created_by" name="created_by" value="<?= $user['name']; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Kode Dokumen</label>
+                                        <input type="text" class="form-control" id="kode_prj" name="kode_prj" value="<?= $dok; ?>" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<?php endforeach; ?>
+
+
+<!-- Modal edit-->
+
+<?php $i = 1; ?>
+<?php 
+foreach ($Perjadin as $a) :
+    $checkspp = "";
+    $checkspm = "";
+    $spp = $a['lpj_nomorsppspm'];
+    $dok = $a['dokumen_id'];
+    $dok_spp = $a['dokumen_spp'];
+    $dok_spm = $a['dokumen_spm'];
+    $dok_sp2d = $a['dokumen_sp2d'];
+    $dok_sk = $a['dokumen_sk'];
+    $dok_kuitansi = $a['dokumen_kuitansi'];
+    $dok_laporan = $a['dokumen_laporan'];
+    $dok_biodata = $a['dokumen_biodata'];
+    $dok_daftar = $a['dokumen_daftarhadir'];
+    $dok_atk = $a['dokumen_atk'];
+    $tgl = $a['lpj_tgl'];
+    $nilaispm = $a['lpj_nilaispm'];
+    $uraian = $a['lpj_uraian'];
+    $file_upload = $a['file_upload'];
+
+    if ($dok_spp = 1) {
+        $checkspp = 'checked';
+    }
+    if ($dok_spm = 1) {
+        $checkspm = 'checked';
+    }
+?>
+
+    <div class="modal fade" id="edit_perjadin<?= $dok; ?>" tabindex="-1" role="dialog" aria-labelledby="edit_perjadinLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <form action="<?= base_url('perjadin/edit_perjadin'); ?>" method="post" enctype="multipart/form-data">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="edit_perjadinlabel">Edit Dokumen Perjalanan Dinas</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-md-auto">
+                                    <div class="form-group">
+                                        <label>Nomor SPP/SPM</label>
+                                        <input type="text" maxlength="5" onkeypress="return hanyaAngka(event)" class="form-control" id="nospp" name="nospp" value="<?= $dok_spp; ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tanggal SPP/SPM</label>
+                                        <input type="text" class="form-control" id="tgl" name="tgl" value="<?= $tgl; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nilai SPM</label>
+                                        <input type="text" class="form-control" id="nilaispm" name="nilaispm" value="<?= 'Rp. ' . $nilaispm; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exampleFormControlFile1">File Upload</label>
+                                        <a href="<?php echo base_url('src/upload/lpj/') . $file_upload; ?>" class="btn btn-success btn-sm"><i class="fas fa-fw fa-download" placeholder="download"></i></a>
+                                    </div>
+                                </div>
+                                <div class="col-md-auto">
+                                    <div class="form-group">
+                                        <label>Uraian</label>
+                                        <input type="text" class="form-control" id="uraian" name="uraian" value="<?= $uraian; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nomor SP2D</label>
+                                        <input type="text" class="form-control" id="nosp2d" name="nosp2d" value="<?= $nosp2d; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tanggal SP2D</label>
+                                        <input type="text" class="form-control" id="tglsp2d" name="tglsp2d" value="<?= $tglsp2d; ?>" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-auto">
+                                    <div class="form-group">
+                                        <label>Nilai SP2D</label>
+                                        <input type="text" class="form-control" id="nilaisp2d" name="nilaisp2d" value="<?= 'Rp. ' . $nilaisp2d; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Uploaded By</label>
+                                        <input type="text" class="form-control" id="created_by" name="created_by" value="<?= $user['name']; ?>" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Kode Dokumen</label>
+                                        <input type="text" class="form-control" id="kode_prj" name="kode_prj" value="<?= $dok; ?>" readonly>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <fieldset>
+                                        <legend>Checklist Dokumen</legend>
+                                        <span class="badge badge-pill badge-warning">Pastikan checklist sesuai file yang diupload</span>
+                                        <div class="row">
+                                            <div class="col-md-auto">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cb_spp" name="cb_spp" <?= $checkspp; ?>>
+                                                        Dokumen SPP
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cb_spm" name="cb_spm" <?= $checkspm; ?>>
+                                                        Dokumen SPM
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cb_sp2d" name="cb_sp2d">
+                                                        Dokumen SP2D
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cb_sk" name="cb_sk">
+                                                        Dokumen ST/SK Kegiatan
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cb_kuitansi" name="cb_kuitansi">
+                                                        Dokumen Rekap dan Kuitansi
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-auto">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cb_laporan" name="cb_laporan">
+                                                        Dokumen Laporan Kegiatan
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cb_biodata" name="cb_biodata">
+                                                        Dokumen Biodata
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cb_daftar" name="cb_daftar">
+                                                        Dokumen Daftar Hadir
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" id="cb_atk" name="cb_atk">
+                                                        Dokumen Tanda Terima Perlengkapan Peserta
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<?php endforeach; ?>
+
+<!-- Modal hapus-->
+
+<?php $i = 1; ?>
+<?php foreach ($Perjadin as $a) :
+    $spp = $a['lpj_nomorsppspm'];
+    $dok = $a['dokumen_id'];
+    $tgl = $a['lpj_tgl'];
+    $nilaispm = $a['lpj_nilaispm'];
+    $uraian = $a['lpj_uraian'];
+    $dok_spp = $a['dokumen_spp'];
+    $dok_spm = $a['dokumen_spm'];
+    $dok_sp2d = $a['dokumen_sp2d'];
+    $dok_sk = $a['dokumen_sk'];
+    $dok_kuitansi = $a['dokumen_kuitansi'];
+    $dok_laporan = $a['dokumen_laporan'];
+    $dok_biodata = $a['dokumen_biodata'];
+    $dok_daftar = $a['dokumen_daftarhadir'];
+    $dok_atk = $a['dokumen_atk'];
+?>
+    <div class="modal fade" id="hapus_perjadin<?= $dok; ?>" tabindex="-1" role="dialog" aria-labelledby="hapus_perjadinLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hapus_perjadinlabel">Perhatian!!</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <form class="" action="<?= base_url('perjadin/hapus_perjadin'); ?>" method="post">
+                            <div class="position-relative form-group">
+                                <p>Apakah Anda Yakin ingin menghapus data <span style="color:red;font-weight:bold"><?= $uraian; ?></span> ?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <input type="hidden" name="dok" value="<?= $dok; ?>">
+                                <input type="hidden" name="dok_spp" value="<?= $dok_spp; ?>">
+                                <input type="hidden" name="dok_spm" value="<?= $dok_spm; ?>">
+                                <input type="hidden" name="dok_sp2d" value="<?= $dok_sp2d; ?>">
+                                <input type="hidden" name="dok_sk" value="<?= $dok_sk; ?>">
+                                <input type="hidden" name="dok_laporan" value="<?= $dok_laporan; ?>">
+                                <input type="hidden" name="dok_kuitansi" value="<?= $dok_kuitansi; ?>">
+                                <input type="hidden" name="dok_daftar" value="<?= $dok_daftar; ?>">
+                                <input type="hidden" name="dok_biodata" value="<?= $dok_biodata; ?>">
+                                <input type="hidden" name="dok_atk" value="<?= $dok_atk; ?>">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                                <button type="submit" class="btn btn-primary">Hapus</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endforeach; ?>
+
+</div>
